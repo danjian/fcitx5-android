@@ -20,6 +20,11 @@ import org.fcitx.fcitx5.android.utils.vibrator
 
 object InputFeedbacks {
 
+    enum class KeyboardLayoutMode(override val stringRes: Int) : ManagedPreferenceEnum {
+        T9(R.string.keyboard_layout_t9),
+        QWERTY(R.string.keyboard_layout_qwerty)
+    }
+
     enum class InputFeedbackMode(override val stringRes: Int) : ManagedPreferenceEnum {
         FollowingSystem(R.string.following_system_settings),
         Enabled(R.string.enabled),

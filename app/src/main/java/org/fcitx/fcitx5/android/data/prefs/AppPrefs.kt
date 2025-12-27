@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import org.fcitx.fcitx5.android.R
+import org.fcitx.fcitx5.android.data.InputFeedbacks
 import org.fcitx.fcitx5.android.data.InputFeedbacks.InputFeedbackMode
 import org.fcitx.fcitx5.android.input.candidates.expanded.ExpandedCandidateStyle
 import org.fcitx.fcitx5.android.input.candidates.floating.FloatingCandidatesMode
@@ -53,6 +54,13 @@ class AppPrefs(private val sharedPreferences: SharedPreferences) {
     }
 
     inner class Keyboard : ManagedPreferenceCategory(R.string.virtual_keyboard, sharedPreferences) {
+        val KeyboardLayout =
+            enumList(
+                R.string.button_keyboard_layout,
+                "button_keyboard_layout",
+                InputFeedbacks.KeyboardLayoutMode.QWERTY
+            )
+
         val hapticOnKeyPress =
             enumList(
                 R.string.button_haptic_feedback,

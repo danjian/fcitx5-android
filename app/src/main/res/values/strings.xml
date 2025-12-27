@@ -316,4 +316,7 @@
     <string name="emoji_skin_tone_type_6">🏿 Type-6</string>
     <string name="hide_unsupported_emojis">Hide unsupported Emojis</string>
     <string name="key_border_stroke">Enable stroke for key border</string>
+    <string name="button_keyboard_layout">Keyboard Layout</string>
+    <string name="keyboard_layout_t9">T9</string>
+    <string name="keyboard_layout_qwerty">QWERTY</string>
 </resources>
