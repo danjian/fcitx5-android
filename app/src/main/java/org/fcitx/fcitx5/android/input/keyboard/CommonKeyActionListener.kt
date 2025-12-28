@@ -9,6 +9,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.fcitx.fcitx5.android.core.FcitxAPI
+import org.fcitx.fcitx5.android.core.FcitxKeyMapping
+import org.fcitx.fcitx5.android.core.KeySym
 import org.fcitx.fcitx5.android.daemon.launchOnReady
 import org.fcitx.fcitx5.android.data.prefs.AppPrefs
 import org.fcitx.fcitx5.android.input.broadcast.PreeditEmptyStateComponent
@@ -34,6 +36,7 @@ import org.fcitx.fcitx5.android.input.keyboard.KeyAction.SymAction
 import org.fcitx.fcitx5.android.input.keyboard.KeyAction.UnicodeAction
 import org.fcitx.fcitx5.android.input.picker.PickerWindow
 import org.fcitx.fcitx5.android.input.wm.InputWindowManager
+import org.fcitx.fcitx5.android.utils.InputMethodUtil
 import org.fcitx.fcitx5.android.utils.switchToNextIME
 import org.mechdancer.dependency.Dependent
 import org.mechdancer.dependency.UniqueComponent
@@ -94,7 +97,11 @@ class CommonKeyActionListener :
                     sendKey(action.act, action.states.states, action.code)
                 }
                 is SymAction -> service.postFcitxJob {
-                    sendKey(action.sym, action.states)
+                    if(action.sym == KeySym(FcitxKeyMapping.FcitxKey_Return)){
+                        service.lifecycleScope.launch { service.handleReturnKey() }
+                    }else{
+                        sendKey(action.sym, action.states)
+                    }
                 }
                 is CommitAction -> service.postFcitxJob {
                     commitAndReset()
@@ -103,6 +110,21 @@ class CommonKeyActionListener :
                 is QuickPhraseAction -> service.postFcitxJob {
                     commitAndReset()
                     triggerQuickPhrase()
+                }
+                is KeyAction.VoiceAction -> {
+                    val voiceInputSubtype = InputMethodUtil.firstVoiceInput() ?: return@KeyActionListener
+                    val (id, subtype) = voiceInputSubtype
+                    InputMethodUtil.switchInputMethod(service, id, subtype)
+                }
+                is KeyAction.ClearAction->{
+                    service.lifecycleScope.launch {
+                        service.handleClearKey()
+                    }
+                }
+                is KeyAction.SegmentAction->{
+                    service.lifecycleScope.launch {
+                        service.handleSegmentKey()
+                    }
                 }
                 is UnicodeAction -> service.postFcitxJob {
                     commitAndReset()

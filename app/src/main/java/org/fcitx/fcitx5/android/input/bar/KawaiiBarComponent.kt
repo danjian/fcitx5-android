@@ -466,7 +466,7 @@ class KawaiiBarComponent : UniqueViewComponent<KawaiiBarComponent, FrameLayout>(
     }
 
     companion object {
-        const val HEIGHT = 40
+        const val HEIGHT = 44 //状态栏高度
     }
 
     fun onKeyboardLayoutSwitched(isNumber: Boolean) {

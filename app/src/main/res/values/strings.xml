@@ -319,4 +319,6 @@
     <string name="button_keyboard_layout">Keyboard Layout</string>
     <string name="keyboard_layout_t9">T9</string>
     <string name="keyboard_layout_qwerty">QWERTY</string>
+    <string name="input_schema_cn">Default Chinese Input Schema</string>
+    <string name="input_schema_en">Default English Input Schema</string>
 </resources>

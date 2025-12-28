@@ -34,10 +34,10 @@ val PopupPreset: Map<String, Array<String>> = hashMapOf(
     "z" to arrayOf("'", "Z", "`", "ž", "ź", "ż"),
     "x" to arrayOf(":", "X", "×"),
     "c" to arrayOf("\"", "C", "ç", "ć", "č"),
-    "v" to arrayOf("?", "V", "¿", "ü", "ǖ", "ǘ", "ǚ", "ǜ"),
-    "b" to arrayOf("!", "B", "¡"),
-    "n" to arrayOf("~", "N", "ñ", "ń"),
-    "m" to arrayOf("\\", "M"),
+    "v" to arrayOf("?","?", "V", "¿", "ü", "ǖ", "ǘ", "ǚ", "ǜ"),
+    "b" to arrayOf("!","！", "B", "¡"),
+    "n" to arrayOf(",","，","~", "N", "ñ", "ń"),
+    "m" to arrayOf(".","。","\\", "M"),
     //
     // Upper case Latin
     //
@@ -152,4 +152,16 @@ val PopupPreset: Map<String, Array<String>> = hashMapOf(
     // Currency
     //
     "$" to arrayOf("¢", "€", "£", "¥", "₹", "₽", "₺", "₩", "₱", "₿"),
+
+    // T9 键盘的映射
+    "t9-0" to arrayOf(""),
+    "t9-1" to arrayOf("1"),
+    "t9-2" to arrayOf("2","a","b","c"),
+    "t9-3" to arrayOf("3","d","e","f"),
+    "t9-4" to arrayOf("4","g","h","i"),
+    "t9-5" to arrayOf("5", "j", "k","l"),
+    "t9-6" to arrayOf("6","m","n","o"),
+    "t9-7" to arrayOf("7", "p","q","r","s"),
+    "t9-8" to arrayOf("8","t","u","v"),
+    "t9-9" to arrayOf("9","w","x","y","z"),
 )

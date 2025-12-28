@@ -319,4 +319,6 @@
     <string name="button_keyboard_layout">键盘布局</string>
     <string name="keyboard_layout_t9">9键</string>
     <string name="keyboard_layout_qwerty">26键</string>
+    <string name="input_schema_cn">中文输入首选方案</string>
+    <string name="input_schema_en">英文输入首选方案</string>
 </resources>

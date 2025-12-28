@@ -10,10 +10,14 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.transition.Slide
+import kotlinx.coroutines.launch
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.core.CapabilityFlags
 import org.fcitx.fcitx5.android.core.InputMethodEntry
+import org.fcitx.fcitx5.android.daemon.launchOnReady
+import org.fcitx.fcitx5.android.data.InputFeedbacks
 import org.fcitx.fcitx5.android.data.prefs.AppPrefs
 import org.fcitx.fcitx5.android.input.bar.KawaiiBarComponent
 import org.fcitx.fcitx5.android.input.broadcast.InputBroadcastReceiver
@@ -32,6 +36,8 @@ import splitties.views.dsl.core.add
 import splitties.views.dsl.core.frameLayout
 import splitties.views.dsl.core.lParams
 import splitties.views.dsl.core.matchParent
+import java.util.ArrayDeque
+import java.util.Deque
 
 class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), EssentialWindow,
     InputBroadcastReceiver {
@@ -44,6 +50,7 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     private val popup: PopupComponent by manager.must()
     private val bar: KawaiiBarComponent by manager.must()
     private val returnKeyDrawable: ReturnKeyDrawableComponent by manager.must()
+    private var symbolTypeStack: Deque<String> = ArrayDeque()
 
     companion object : EssentialWindow.Key
 
@@ -67,11 +74,16 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
 
     private val keyboards: HashMap<String, BaseKeyboard> by lazy {
         hashMapOf(
+            QWERTextKeyboard.Name to QWERTextKeyboard(context,theme),
+            T9TextKeyboard.Name to T9TextKeyboard(context,theme),
             TextKeyboard.Name to TextKeyboard(context, theme),
             NumberKeyboard.Name to NumberKeyboard(context, theme)
         )
     }
     private var currentKeyboardName = ""
+
+    private var keyboardLayout: InputFeedbacks.KeyboardLayoutMode by AppPrefs.getInstance().keyboard.KeyboardLayout
+
     private var lastSymbolType: String by AppPrefs.getInstance().internal.lastSymbolLayout
 
     private val currentKeyboard: BaseKeyboard? get() = keyboards[currentKeyboardName]
@@ -117,10 +129,26 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     }
 
     fun switchLayout(to: String, remember: Boolean = true) {
-        val target = to.ifEmpty { lastSymbolType }
+        // 1. 确定目标 (target)
+        val target = to.ifEmpty {
+            if (symbolTypeStack.isNotEmpty()) symbolTypeStack.pop() else T9TextKeyboard.Name
+        }
+        // 2. 只有在【不是回退操作】且【页面确实发生变化】时才记忆
+        // 如果 to 不为空，说明是主动跳转 (A -> B)，需要 remember
+        // 如果 to 为空，说明是执行返回 (B -> A)，此时不需要再 push，否则会把刚才离开的页面又存回去
+        if (remember && to.isNotEmpty() && currentKeyboardName.isNotEmpty()) {
+            // 额外检查：防止重复压入相同的页面（比如 B -> B）
+            if (symbolTypeStack.peek() != currentKeyboardName) {
+                symbolTypeStack.push(currentKeyboardName)
+            }
+        }
+        // 3. 特殊逻辑：处理符号键盘与数字键盘的嵌套
+        if (currentKeyboardName == PickerWindow.Key.Symbol.name && target == NumberKeyboard.Name) {
+            if (symbolTypeStack.isNotEmpty()) symbolTypeStack.pop()
+        }
         ContextCompat.getMainExecutor(service).execute {
             if (keyboards.containsKey(target)) {
-                if (remember && target != TextKeyboard.Name) {
+                if (remember) {
                     lastSymbolType = target
                 }
                 if (target == currentKeyboardName) return@execute
@@ -139,12 +167,16 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     }
 
     override fun onStartInput(info: EditorInfo, capFlags: CapabilityFlags) {
+        val layout = when(keyboardLayout){
+            InputFeedbacks.KeyboardLayoutMode.QWERTY -> QWERTextKeyboard.Name
+            InputFeedbacks.KeyboardLayoutMode.T9 -> T9TextKeyboard.Name
+        }
         val targetLayout = when (info.inputType and InputType.TYPE_MASK_CLASS) {
             InputType.TYPE_CLASS_NUMBER -> NumberKeyboard.Name
             InputType.TYPE_CLASS_PHONE -> NumberKeyboard.Name
-            else -> TextKeyboard.Name
+            else -> layout
         }
-        switchLayout(targetLayout, remember = false)
+        switchLayout(targetLayout, remember = true)
     }
 
     override fun onImeUpdate(ime: InputMethodEntry) {
@@ -160,6 +192,28 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     }
 
     override fun onAttached() {
+//        val schemaIndex = mapOf(
+//            QWERTextKeyboard.Name to 1,
+//            T9TextKeyboard.Name to 2,
+//        )
+//        if(schemaIndex.containsKey(currentKeyboardName)) {
+//            fcitx.launchOnReady {
+//                val actions = it.statusArea()
+//                for (item in actions) {
+//                    if (!item.name.endsWith("-im")) {
+//                        continue
+//                    }
+//                    if (item.menu.isNullOrEmpty()) {
+//                        continue
+//                    }
+//                    for ((index,menu) in item.menu.withIndex()) {
+//                        if (index == schemaIndex[currentKeyboardName]){
+//                            it.activateAction(menu.id)
+//                        }
+//                    }
+//                }
+//            }
+//        }
         currentKeyboard?.let {
             it.keyActionListener = keyActionListener
             it.popupActionListener = popupActionListener

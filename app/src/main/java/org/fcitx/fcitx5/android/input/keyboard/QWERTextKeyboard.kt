@@ -22,17 +22,13 @@ import org.fcitx.fcitx5.android.input.popup.PopupAction
 import splitties.views.imageResource
 
 @SuppressLint("ViewConstructor")
-class TextKeyboard(
+class QWERTextKeyboard(
     context: Context,
     theme: Theme
 ) : BaseKeyboard(context, theme, Layout) {
 
-    enum class CapsState { None, Once, Lock }
-
-    enum class ModeState {Ascii,Normal}
-
     companion object {
-        const val Name = "Text"
+        const val Name = "QWERText"
 
         val Layout: List<List<KeyDef>> = listOf(
             listOf(
@@ -59,7 +55,7 @@ class TextKeyboard(
                 AlphabetKey("L", ")")
             ),
             listOf(
-                CapsKey(),
+                SegmentKey("分词"),
                 AlphabetKey("Z", "'"),
                 AlphabetKey("X", ":"),
                 AlphabetKey("C", "\""),
@@ -71,7 +67,7 @@ class TextKeyboard(
             ),
             listOf(
                 ImageLayoutSwitchKey(R.drawable.ic_baseline_at_24, PickerWindow.Key.Symbol.name, percentWidth =  0.15f,KeyDef.Appearance.Variant.Alternative),
-                ImageLayoutSwitchKey(R.drawable.ic_baseline_input_mode_en_icon_24, "", percentWidth = 0f,variant= KeyDef.Appearance.Variant.Alternative,viewId = R.id.button_switch_layout),
+                ImageLayoutSwitchKey(R.drawable.ic_baseline_input_mode_cn_icon_24, TextKeyboard.Name, percentWidth = 0f,variant= KeyDef.Appearance.Variant.Alternative,viewId = R.id.button_switch_layout),
                 NormalSpaceKey(0.2333333f,KeyDef.Appearance.Variant.Alternative),
                 ImageLayoutSwitchKey(R.drawable.ic_baseline_number123_24, NumberKeyboard.Name, percentWidth =  0f,KeyDef.Appearance.Variant.Alternative),
                 ReturnKey()
@@ -80,7 +76,6 @@ class TextKeyboard(
     }
 
     val layout: ImageKeyView by lazy { findViewById(R.id.button_switch_layout) }
-    val caps: ImageKeyView by lazy { findViewById(R.id.button_caps) }
     val backspace: ImageKeyView by lazy { findViewById(R.id.button_backspace) }
     val quickphrase: ImageKeyView by lazy { findViewById(R.id.button_quickphrase) }
     val lang: ImageKeyView by lazy { findViewById(R.id.button_lang) }
@@ -93,15 +88,8 @@ class TextKeyboard(
         allViews.filterIsInstance(TextKeyView::class.java).toList()
     }
 
-    private var capsState: CapsState = CapsState.None
-
-    private var modeState: ModeState = ModeState.Ascii
-
     private fun transformAlphabet(c: String): String {
-        return when (capsState) {
-            CapsState.None -> c.lowercase()
-            else -> c.uppercase()
-        }
+        return c.lowercase()
     }
 
     private var punctuationMapping: Map<String, String> = mapOf()
@@ -111,50 +99,17 @@ class TextKeyboard(
         var transformed = action
         when (action) {
             is KeyAction.FcitxKeyAction -> when (source) {
-                KeyActionListener.Source.Popup ->{
-                    transformed = action.copy(
-                        act = action.act,
-                        states = KeyStates(KeyState.Virtual, KeyState.CapsLock)
-                    )
-                }
                 KeyActionListener.Source.Keyboard -> {
-                    when (capsState) {
-                        CapsState.None -> {
-                            transformed = action.copy(
-                                act = action.act.lowercase(),
-                                states = KeyStates(KeyState.Virtual, KeyState.CapsLock)
-                            )
-                        }
-                        CapsState.Once -> {
-                            transformed = action.copy(
-                                act = action.act.uppercase(),
-                                states = KeyStates(KeyState.Virtual, KeyState.CapsLock)
-                            )
-                            switchCapsState()
-                        }
-                        CapsState.Lock -> {
-                            transformed = action.copy(
-                                act = action.act.uppercase(),
-                                states = KeyStates(KeyState.Virtual, KeyState.CapsLock)
-                            )
-                        }
-                    }
+                     transformed = action.copy(act = action.act.lowercase())
                 }
-                KeyActionListener.Source.Popup -> {
-                    if (capsState == CapsState.Once) {
-                        switchCapsState()
-                    }
-                }
+                else -> {}
             }
-            is KeyAction.CapsAction -> switchCapsState(action.lock)
             else -> {}
         }
         super.onAction(transformed, source)
     }
 
     override fun onAttach() {
-        capsState = CapsState.None
-        updateCapsButtonIcon()
         updateAlphabetKeys()
     }
 
@@ -165,12 +120,6 @@ class TextKeyboard(
     override fun onPunctuationUpdate(mapping: Map<String, String>) {
         punctuationMapping = mapping
         updatePunctuationKeys()
-    }
-
-    override fun onInputMethodUpdate(ime: InputMethodEntry) {
-        if (capsState != CapsState.None) {
-            switchCapsState()
-        }
     }
 
     private fun transformPopupPreview(c: String): String {
@@ -194,43 +143,12 @@ class TextKeyboard(
         super.onPopupAction(newAction)
     }
 
-    private fun switchCapsState(lock: Boolean = false) {
-        capsState =
-            if (lock) {
-                when (capsState) {
-                    CapsState.Lock -> CapsState.None
-                    else -> CapsState.Lock
-                }
-            } else {
-                when (capsState) {
-                    CapsState.None -> CapsState.Once
-                    else -> CapsState.None
-                }
-            }
-        updateCapsButtonIcon()
-        updateAlphabetKeys()
-    }
-
-    private fun updateCapsButtonIcon() {
-        caps.img.apply {
-            imageResource = when (capsState) {
-                CapsState.None -> R.drawable.ic_capslock_none
-                CapsState.Once -> R.drawable.ic_capslock_once
-                CapsState.Lock -> R.drawable.ic_capslock_lock
-            }
-        }
-    }
-
-    private fun updateLangSwitchKey(visible: Boolean) {
-        lang.visibility = if (visible) View.VISIBLE else View.GONE
-    }
-
     private fun updateAlphabetKeys() {
         textKeys.forEach {
             if (it.def !is KeyDef.Appearance.AltText) return
             it.mainText.text = it.def.displayText.let { str ->
                 if (str.length != 1 || !str[0].isLetter()) return@forEach
-                if (keepLettersUppercase) str.uppercase() else transformAlphabet(str)
+                if (keepLettersUppercase) str.uppercase() else str.uppercase()
             }
         }
     }

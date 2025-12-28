@@ -5,6 +5,7 @@
 package org.fcitx.fcitx5.android.input.picker
 
 import android.annotation.SuppressLint
+import android.view.View.GONE
 import androidx.core.content.ContextCompat
 import androidx.transition.Transition
 import androidx.viewpager2.widget.ViewPager2
@@ -127,6 +128,7 @@ class PickerWindow(
             // update initial tab and page manually to avoid
             // "Adding or removing callbacks during dispatch to callbacks"
             tabsUi.activateTab(1)
+            paginationUi.root.visibility = GONE
             paginationUi.updatePageCount(range.run { last - first + 1 })
             registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageScrolled(

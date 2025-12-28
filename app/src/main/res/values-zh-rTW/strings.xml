@@ -318,4 +318,6 @@
     <string name="button_keyboard_layout">鍵盤佈局</string>
     <string name="keyboard_layout_t9">9鍵</string>
     <string name="keyboard_layout_qwerty">QWERTY</string>
+    <string name="input_schema_cn">中文輸入首選方案</string>
+    <string name="input_schema_en">英文輸入首選方案</string>
 </resources>

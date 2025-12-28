@@ -23,6 +23,12 @@ sealed class KeyAction {
 
     data class CapsAction(val lock: Boolean) : KeyAction()
 
+    data object VoiceAction : KeyAction()
+
+    data object SegmentAction : KeyAction()
+
+    data object ClearAction : KeyAction()
+
     data object QuickPhraseAction : KeyAction()
 
     data object UnicodeAction : KeyAction()
