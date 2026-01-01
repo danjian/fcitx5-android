@@ -315,4 +315,9 @@
     <string name="emoji_skin_tone_type_5">🏾 中等深膚色 (Type-5)</string>
     <string name="emoji_skin_tone_type_6">🏿 深膚色 (Type-6)</string>
     <string name="hide_unsupported_emojis">隱藏不支援的表情</string>
-    </resources>
+    <string name="button_keyboard_layout">鍵盤佈局</string>
+    <string name="keyboard_layout_t9">9鍵</string>
+    <string name="keyboard_layout_qwerty">QWERTY</string>
+    <string name="input_schema_cn">中文輸入首選方案</string>
+    <string name="input_schema_en">英文輸入首選方案</string>
+</resources>

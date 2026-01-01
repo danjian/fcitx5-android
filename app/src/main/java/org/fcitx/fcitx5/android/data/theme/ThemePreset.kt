@@ -74,7 +74,7 @@ object ThemePreset {
         altKeyBackgroundColor = 0xffe1e1e1,
         // Google Pinyin's symbol color on alphabet key: #4e4e4e
         altKeyTextColor = 0xff6e6e6e,
-        accentKeyBackgroundColor = 0xff4285f4,
+        accentKeyBackgroundColor = 0xff2a6465,
         accentKeyTextColor = 0xffffffff,
         keyPressHighlightColor = 0x1f000000,
         keyShadowColor = 0xffc2c2c2,
@@ -101,7 +101,7 @@ object ThemePreset {
         altKeyBackgroundColor = 0xff373737,
         // Google Pinyin's symbol color on alphabet key: #d6d6d6
         altKeyTextColor = 0xffacacac,
-        accentKeyBackgroundColor = 0xff5e97f6,
+        accentKeyBackgroundColor = 0xff2a6465,
         accentKeyTextColor = 0xffffffff,
         keyPressHighlightColor = 0x33ffffff,
         keyShadowColor = 0xff252525,

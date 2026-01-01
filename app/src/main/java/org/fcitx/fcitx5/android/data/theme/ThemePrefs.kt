@@ -34,14 +34,14 @@ class ThemePrefs(sharedPreferences: SharedPreferences) :
         return pref
     }
 
-    val keyBorder = switch(R.string.key_border, "key_border", false)
+    val keyBorder = switch(R.string.key_border, "key_border", true)
 
     val keyBorderStroke = switch(
         R.string.key_border_stroke, "key_border_stroke", false,
         enableUiOn = { keyBorder.getValue() }
     )
 
-    val keyRippleEffect = switch(R.string.key_ripple_effect, "key_ripple_effect", false)
+    val keyRippleEffect = switch(R.string.key_ripple_effect, "key_ripple_effect", true)
 
     val keyHorizontalMargin: ManagedPreference.PInt
     val keyHorizontalMarginLandscape: ManagedPreference.PInt
@@ -71,10 +71,10 @@ class ThemePrefs(sharedPreferences: SharedPreferences) :
             R.string.key_vertical_margin,
             R.string.portrait,
             "key_vertical_margin",
-            7,
+            3,
             R.string.landscape,
             "key_vertical_margin_landscape",
-            4,
+            3,
             0,
             24,
             "dp"

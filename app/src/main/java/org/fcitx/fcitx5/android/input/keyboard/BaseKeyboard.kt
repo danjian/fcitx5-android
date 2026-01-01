@@ -65,6 +65,21 @@ abstract class BaseKeyboard(
         }
     }
 
+    companion object{
+        var numberSymMap = mapOf(
+            "1" to 0xffb1,
+            "2" to 0xffb2,
+            "3" to 0xffb3,
+            "4" to 0xffb4,
+            "5" to 0xffb5,
+            "6" to 0xffb6,
+            "7" to 0xffb7,
+            "8" to 0xffb8,
+            "9" to 0xffb9,
+            "0" to 0xffb0,
+        )
+    }
+
     private val vivoKeypressWorkaround by prefs.advanced.vivoKeypressWorkaround
 
     private val hapticOnRepeat by prefs.keyboard.hapticOnRepeat

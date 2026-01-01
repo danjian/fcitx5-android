@@ -135,6 +135,8 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
     private val inlineSuggestions by prefs.keyboard.inlineSuggestions
     private val ignoreSystemCursor by prefs.advanced.ignoreSystemCursor
 
+    private val regex = "〔(.*?)〕".toRegex()
+
     private val recreateInputViewPrefs: Array<ManagedPreference<*>> = arrayOf(
         prefs.keyboard.expandKeypressArea,
         prefs.advanced.disableAnimation,
@@ -324,6 +326,12 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
                     }
                 }
             }
+            is FcitxEvent.CandidateListEvent -> {
+                candidates = event.data.candidates
+            }
+            is FcitxEvent.InputPanelEvent -> {
+                preedit = event.data.preedit.toString()
+            }
             else -> {}
         }
     }
@@ -337,6 +345,40 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
             ic.deleteSurroundingTextInCodePoints(before, after)
         } else {
             ic.deleteSurroundingText(before, after)
+        }
+    }
+
+
+    fun  handleSegmentKey(){
+        //只有在选取有内容的时候，支持分段
+        if (candidates.isEmpty()) {
+            return
+        }
+        //不允许两次连续分词
+        if(preedit.endsWith(" ") || preedit.endsWith("'")){
+            return
+        }
+        postFcitxJob {
+            sendKey("'", up = false)
+        }
+    }
+
+     fun handleClearKey(commandOnly : Boolean = false) {
+        //如果候选区为空，那么看输入框是否有数据
+        if (candidates.isEmpty() && !commandOnly){
+            val ic = currentInputConnection ?: return
+            val before = ic.getTextBeforeCursor(Int.MAX_VALUE, 0)?.length ?: 0
+            val after = ic.getTextAfterCursor(Int.MAX_VALUE, 0)?.length ?: 0
+            if (before + after > 0) {
+                ic.withBatchEdit {
+                    ic.deleteSurroundingText(before, after)
+                }
+                selection.resetTo(0, 0)
+            }
+            return
+        }
+        postFcitxJob {
+            sendKey("F12", up = false)
         }
     }
 
@@ -371,13 +413,27 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
         }
     }
 
-    private fun handleReturnKey() {
+    fun handleReturnKey() {
         currentInputEditorInfo.run {
             if (inputType and InputType.TYPE_MASK_CLASS == InputType.TYPE_NULL) {
                 sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
                 return
             }
             if (imeOptions.hasFlag(EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
+                //首先看当前候选区是否有候选词,如果有候选词，那么候选词上屏
+                if (candidates.isNotEmpty()){
+                    postFcitxJob {
+                        select(0)
+                    }
+                    return
+                }
+                if(preedit.isNotEmpty()){
+                    postFcitxJob {
+                        commitText(preedit)
+                    }
+                    handleClearKey(true)
+                    return
+                }
                 commitText("\n")
                 return
             }
@@ -387,7 +443,22 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
             }
             when (val action = imeOptions and EditorInfo.IME_MASK_ACTION) {
                 EditorInfo.IME_ACTION_UNSPECIFIED,
-                EditorInfo.IME_ACTION_NONE -> commitText("\n")
+                EditorInfo.IME_ACTION_NONE -> {
+                    if (candidates.isNotEmpty()){
+                        postFcitxJob {
+                            select(0)
+                        }
+                        return
+                    }
+                    if(preedit.isNotEmpty()){
+                        postFcitxJob {
+                            commitText(preedit)
+                        }
+                        handleClearKey(true)
+                        return
+                    }
+                    commitText("\n")
+                }
                 else -> currentInputConnection.performEditorAction(action)
             }
         }
@@ -1088,5 +1159,11 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
     @Suppress("ConstPropertyName")
     companion object {
         const val DeleteSurroundingFlag = "org.fcitx.fcitx5.android.DELETE_SURROUNDING"
+
+        // 候选词列表
+        var candidates: Array<String> = arrayOf()
+            private set
+        var preedit:String =""
+            private set
     }
 }

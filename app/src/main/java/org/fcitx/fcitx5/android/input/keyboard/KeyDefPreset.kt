@@ -5,6 +5,7 @@
 package org.fcitx.fcitx5.android.input.keyboard
 
 import android.graphics.Typeface
+import android.view.KeyEvent
 import androidx.annotation.DrawableRes
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.core.FcitxKeyMapping
@@ -48,7 +49,7 @@ class AlphabetKey(
     Appearance.AltText(
         displayText = character,
         altText = punctuation,
-        textSize = 23f,
+        textSize = 20f,
         variant = variant
     ),
     setOf(
@@ -308,10 +309,10 @@ class MiniSpaceKey : KeyDef(
         viewId = R.id.button_mini_space
     ),
     setOf(
-        Behavior.Press(KeyAction.SymAction(KeySym(FcitxKeyMapping.FcitxKey_space)))
+        Behavior.Press(KeyAction.SymAction(KeySym(FcitxKeyMapping.FcitxKey_space))),
+        Behavior.LongPress(KeyAction.SpaceLongPressAction)
     )
 )
-
 class NumPadKey(
     displayText: String,
     val sym: Int,
@@ -327,5 +328,116 @@ class NumPadKey(
     ),
     setOf(
         Behavior.Press(KeyAction.SymAction(KeySym(sym), NumLockState))
+    )
+)
+
+
+
+class ClearKey(
+    displayText: String,
+    textSize: Float = 16f,
+    percentWidth: Float = 0.15f,
+    variant: Variant = Variant.Alternative,
+) : KeyDef(
+    Appearance.Text(
+        displayText,
+        textSize = textSize,
+        percentWidth = percentWidth,
+        variant = variant
+    ),
+    setOf(
+        Behavior.Press(KeyAction.ClearAction),
+    )
+)
+
+class VoiceKey(
+    percentWidth: Float = 0.15f,
+    variant: Variant = Variant.Alternative,
+    viewId: Int = -1
+) : KeyDef(
+    Appearance.Image(
+        src = R.drawable.ic_baseline_voice_24,
+        percentWidth = percentWidth,
+        variant = variant,
+        viewId = viewId
+    ),
+    setOf(
+        Behavior.Press(KeyAction.VoiceAction)
+    )
+)
+
+class SegmentKey(
+    displayText: String,
+    textSize: Float = 16f,
+    percentWidth: Float = 0.15f,
+    variant: Variant = Variant.Normal,
+    popup: Array<Popup>? = null,
+) : KeyDef(
+    Appearance.Text(
+        displayText,
+        textSize = textSize,
+        percentWidth = percentWidth,
+        variant = variant
+    ),
+    setOf(
+        Behavior.Press(KeyAction.SegmentAction),
+    ),
+    popup ?: arrayOf(
+        Popup.Keyboard("t9-1")
+    )
+)
+
+
+class NormalSpaceKey(percentWidth: Float = 0f, variant: Variant = Variant.Normal) : KeyDef(
+    Appearance.Image(
+        src = R.drawable.ic_baseline_space_bar_24,
+        percentWidth = percentWidth,
+        variant = variant,
+        viewId = R.id.button_mini_space
+    ),
+    setOf(
+        Behavior.Press(KeyAction.SymAction(KeySym(FcitxKeyMapping.FcitxKey_space))),
+        Behavior.LongPress(KeyAction.SpaceLongPressAction)
+    )
+)
+
+class MixedAlphabetKey(
+    character:String,
+    displayText: String,
+    textSize: Float = 16f,
+    percentWidth: Float = 0.1f,
+    variant: Variant = Variant.Normal,
+    popup: Array<Popup>? = null,
+    keyBorder: Border = Border.Special
+) : KeyDef(
+    Appearance.Text(
+        displayText,
+        textSize = textSize,
+        percentWidth = percentWidth,
+        variant = variant
+    ),
+    setOf(
+        Behavior.Press(KeyAction.FcitxKeyAction(character)),
+        Behavior.Swipe(KeyAction.FcitxKeyAction(character))
+    ),
+    popup ?: arrayOf(
+        Popup.Keyboard("t9-$character")
+    )
+)
+
+class PunctuationKey(
+     symbol: String,
+     textSize: Float = 16f,
+     percentWidth: Float = 0.15f,
+     variant: Variant = Variant.Normal,
+) : KeyDef(
+    Appearance.Text(
+        displayText = symbol,
+        textSize = textSize,
+        percentWidth = percentWidth,
+        variant = variant
+    ),
+    setOf(
+        Behavior.Press(KeyAction.FcitxKeyAction(symbol))
     )
 )
