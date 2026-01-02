@@ -19,7 +19,8 @@ open class KeyDef(
         val border: Border,
         val margin: Boolean,
         val viewId: Int,
-        val soundEffect: InputFeedbacks.SoundEffect
+        val soundEffect: InputFeedbacks.SoundEffect,
+        val borderStroke: Boolean = true
     ) {
         enum class Variant {
             Normal, AltForeground, Alternative, Accent
@@ -28,6 +29,16 @@ open class KeyDef(
         enum class Border {
             Default, On, Off, Special
         }
+
+        class Column(
+            val children: List<KeyDef>,      // 里面的 Key
+            percentWidth: Float = 0.1f,
+            variant: Variant = Variant.Normal,
+            border: Border = Border.Default,
+            margin: Boolean = true,
+            viewId: Int = -1,
+            soundEffect: InputFeedbacks.SoundEffect = InputFeedbacks.SoundEffect.Standard
+        ) : Appearance(percentWidth, variant, border, margin, viewId,soundEffect)
 
         open class Text(
             val displayText: String,

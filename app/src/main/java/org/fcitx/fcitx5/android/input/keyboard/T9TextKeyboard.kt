@@ -18,34 +18,46 @@ import splitties.views.imageResource
 class T9TextKeyboard(
     context: Context,
     theme: Theme,
-) : BaseKeyboard(context, theme, Layout) {
+) : MergedBaseKeyboard(context, theme, Layout,columnKey,columnNum) {
 
     val numLockState = KeyStates(KeyState.NumLock, KeyState.Virtual)
 
     companion object {
         const val Name = "T9Text"
 
+        var columnNum = 3
+
+        val columnKey = ColumnKey(children = listOf(
+            MixedAlphabetKey("，", "，", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey("。", "。", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey("？", "？", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey("；", "；", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey("！", "！", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey(",", ",", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey(".", ".", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey("?", "?", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey(";", ";", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            MixedAlphabetKey("!", "!", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
+            ), percentWidth = 0.15f,KeyDef.Appearance.Variant.Alternative)
+
         val Layout: List<List<KeyDef>> = listOf(
             listOf(
-                MixedAlphabetKey("，", "，", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
                 SegmentKey("分词", percentWidth = 0f),
                 MixedAlphabetKey("2","ABC", 16f, 0f),
                 MixedAlphabetKey("3","DEF", 16f, 0f),
-                BackspaceKey()
+                BackspaceKey(percentWidth = 0.175f)
             ),
             listOf(
-                MixedAlphabetKey("。", "。", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
                 MixedAlphabetKey("4","GHI",  16f, 0f),
                 MixedAlphabetKey("5","JKL",  16f, 0f),
                 MixedAlphabetKey("6","MNO", 16f, 0f),
-                ClearKey("清空")
+                ClearKey("清空", percentWidth = 0.175f)
             ),
             listOf(
-                MixedAlphabetKey("？", "？", 20f, 0.15f, KeyDef.Appearance.Variant.Alternative),
                 MixedAlphabetKey("7","PQRS", 16f, 0f),
                 MixedAlphabetKey("8","TUV",  16f, 0f),
                 MixedAlphabetKey("9","WXYZ",  16f, 0f),
-                VoiceKey()
+                VoiceKey(percentWidth = 0.175f)
             ),
             listOf(
                 ImageLayoutSwitchKey(R.drawable.ic_baseline_at_24, PickerWindow.Key.Symbol.name, percentWidth =  0.15f,KeyDef.Appearance.Variant.Alternative),

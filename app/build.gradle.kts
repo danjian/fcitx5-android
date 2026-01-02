@@ -86,6 +86,7 @@ ksp {
 }
 
 dependencies {
+    implementation(libs.androidx.core.animation)
     ksp(project(":codegen"))
     implementation(project(":lib:fcitx5"))
     implementation(project(":lib:fcitx5-lua"))

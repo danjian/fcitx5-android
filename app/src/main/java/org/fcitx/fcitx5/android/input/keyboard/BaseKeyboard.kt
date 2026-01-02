@@ -47,9 +47,9 @@ abstract class BaseKeyboard(
     context: Context,
     protected val theme: Theme,
     private val keyLayout: List<List<KeyDef>>
-) : ConstraintLayout(context) {
+) : ConstraintLayout(context),IKeyboard  {
 
-    var keyActionListener: KeyActionListener? = null
+    override var keyActionListener: KeyActionListener? = null
 
     private val prefs = AppPrefs.getInstance()
 
@@ -84,7 +84,7 @@ abstract class BaseKeyboard(
 
     private val hapticOnRepeat by prefs.keyboard.hapticOnRepeat
 
-    var popupActionListener: PopupActionListener? = null
+    override var popupActionListener: PopupActionListener? = null
 
     private val selectionSwipeThreshold = dp(10f)
     private val inputSwipeThreshold = dp(36f)
@@ -93,7 +93,7 @@ abstract class BaseKeyboard(
     private val disabledSwipeThreshold = dp(800f)
 
     private val bounds = Rect()
-    private val keyRows: List<ConstraintLayout>
+    override var keyRows: List<ConstraintLayout> = listOf()
 
     /**
      * HashMap of [PointerId (Int)][MotionEvent.getPointerId] to [KeyView]
@@ -159,12 +159,13 @@ abstract class BaseKeyboard(
         spaceSwipeMoveCursor.registerOnChangeListener(spaceSwipeChangeListener)
     }
 
-    private fun createKeyView(def: KeyDef): KeyView {
+    open fun createKeyView(def: KeyDef): KeyView {
         return when (def.appearance) {
             is KeyDef.Appearance.AltText -> AltTextKeyView(context, theme, def.appearance)
             is KeyDef.Appearance.ImageText -> ImageTextKeyView(context, theme, def.appearance)
             is KeyDef.Appearance.Text -> TextKeyView(context, theme, def.appearance)
             is KeyDef.Appearance.Image -> ImageKeyView(context, theme, def.appearance)
+            is KeyDef.Appearance.Column -> ColumnKeyView(context,theme,def.appearance)
         }.apply {
             soundEffect = when (def) {
                 is SpaceKey -> InputFeedbacks.SoundEffect.SpaceBar
@@ -470,15 +471,15 @@ abstract class BaseKeyboard(
     }
 
     @CallSuper
-    protected open fun onAction(
+    override fun onAction(
         action: KeyAction,
-        source: KeyActionListener.Source = KeyActionListener.Source.Keyboard
+        source: KeyActionListener.Source
     ) {
         keyActionListener?.onKeyAction(action, source)
     }
 
     @CallSuper
-    protected open fun onPopupAction(action: PopupAction) {
+    override fun onPopupAction(action: PopupAction) {
         popupActionListener?.onPopupAction(action)
     }
 
@@ -498,23 +499,23 @@ abstract class BaseKeyboard(
         return true
     }
 
-    open fun onAttach() {
+    override fun onAttach() {
         // do nothing by default
     }
 
-    open fun onReturnDrawableUpdate(@DrawableRes returnDrawable: Int) {
+    override fun onReturnDrawableUpdate(@DrawableRes returnDrawable: Int) {
         // do nothing by default
     }
 
-    open fun onPunctuationUpdate(mapping: Map<String, String>) {
+    override fun onPunctuationUpdate(mapping: Map<String, String>) {
         // do nothing by default
     }
 
-    open fun onInputMethodUpdate(ime: InputMethodEntry) {
+    override fun onInputMethodUpdate(ime: InputMethodEntry) {
         // do nothing by default
     }
 
-    open fun onDetach() {
+    override fun onDetach() {
         // do nothing by default
     }
 

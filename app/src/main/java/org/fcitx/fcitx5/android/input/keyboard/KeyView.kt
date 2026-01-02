@@ -8,6 +8,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
@@ -18,12 +19,17 @@ import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.StateListDrawable
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewOutlineProvider
+import android.widget.EdgeEffect
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSnapHelper
+import androidx.recyclerview.widget.RecyclerView
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.data.theme.Theme
 import org.fcitx.fcitx5.android.data.theme.ThemeManager
@@ -249,6 +255,86 @@ abstract class KeyView(ctx: Context, val theme: Theme, val def: KeyDef.Appearanc
 }
 
 @SuppressLint("ViewConstructor")
+class ColumnKeyView(
+    ctx: Context,
+    theme: Theme,
+    def: KeyDef.Appearance.Column
+) : KeyView(ctx, theme, def) {
+
+    private val visibleCount = 3
+
+    private val recyclerView: RecyclerView = RecyclerView(ctx).apply {
+        overScrollMode = RecyclerView.OVER_SCROLL_NEVER
+        isVerticalScrollBarEnabled = false
+        clipChildren = true
+        clipToPadding = true
+        clipToOutline = true
+        layoutManager = LinearLayoutManager(ctx, RecyclerView.VERTICAL, false)
+        LinearSnapHelper().attachToRecyclerView(this)
+
+        edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
+            override fun createEdgeEffect(view: RecyclerView, direction: Int) =
+                EdgeEffect(view.context).apply { finish() }
+        }
+    }
+
+    /** Adapter 由外部注入 */
+    var adapter: MergedBaseKeyboard.ColumnAdapter? = null
+        set(value) {
+            field = value
+            recyclerView.adapter = value
+            recyclerView.scrollToPosition(0)
+        }
+
+    init {
+
+        outlineProvider = ViewOutlineProvider.BOUNDS
+        clipToOutline = true
+        clipChildren = true
+        clipToPadding = true
+
+        addView(recyclerView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        recyclerView.post {
+            (recyclerView.layoutManager as? LinearLayoutManager)
+                ?.scrollToPositionWithOffset(0, 0)
+        }
+    }
+
+    override fun dispatchDraw(canvas: Canvas) {
+        val save = canvas.save()
+        canvas.clipRect(0, 10, width, height - 10)
+        super.dispatchDraw(canvas)
+        canvas.restoreToCount(save)
+    }
+
+    fun refreshRecyclerView(){
+        recyclerView.removeAllViewsInLayout()
+        recyclerView.requestLayout()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (h <= 0 || h == oldh) return
+        val newHeight = h / visibleCount
+        adapter?.let {
+            if (it.itemHeight != newHeight) {
+                it.itemHeight = newHeight
+                recyclerView.post { it.notifyDataSetChanged() }
+            }
+        }
+    }
+
+    class VH(view: View) : RecyclerView.ViewHolder(view) {
+        init { itemView.clipToOutline = true }
+    }
+}
+
+
+@SuppressLint("ViewConstructor")
 open class TextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.Text) :
     KeyView(ctx, theme, def) {
     val mainText = view(::AutoScaleTextView) {
@@ -257,7 +343,7 @@ open class TextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.Text) 
         background = null
         text = def.displayText
         setTextSize(TypedValue.COMPLEX_UNIT_DIP, def.textSize)
-        textDirection = View.TEXT_DIRECTION_FIRST_STRONG_LTR
+        textDirection = TEXT_DIRECTION_FIRST_STRONG_LTR
         // keep original typeface, apply textStyle only
         setTypeface(typeface, def.textStyle)
         setTextColor(
@@ -288,7 +374,7 @@ class AltTextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.AltText)
         setTextSize(TypedValue.COMPLEX_UNIT_DIP, 10.666667f)
         setTypeface(typeface, Typeface.BOLD)
         text = def.altText
-        textDirection = View.TEXT_DIRECTION_FIRST_STRONG_LTR
+        textDirection = TEXT_DIRECTION_FIRST_STRONG_LTR
         setTextColor(
             when (def.variant) {
                 Variant.Normal, Variant.AltForeground, Variant.Alternative -> theme.altKeyTextColor
@@ -313,7 +399,7 @@ class AltTextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.AltText)
             topToTop = parentId
             bottomToBottom = parentId
         }
-        altText.visibility = View.VISIBLE
+        altText.visibility = VISIBLE
         altText.updateLayoutParams<ConstraintLayout.LayoutParams> {
             // reset
             bottomToBottom = unset; bottomMargin = 0
@@ -332,7 +418,7 @@ class AltTextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.AltText)
             topToTop = parentId; topMargin = vMargin
             bottomToTop = altText.existingOrNewId
         }
-        altText.visibility = View.VISIBLE
+        altText.visibility = VISIBLE
         altText.updateLayoutParams<ConstraintLayout.LayoutParams> {
             // reset
             topToTop = unset; topMargin = 0
@@ -353,7 +439,7 @@ class AltTextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.AltText)
             topToTop = parentId
             bottomToBottom = parentId
         }
-        altText.visibility = View.GONE
+        altText.visibility = GONE
     }
 
     private fun applyLayout(orientation: Int) {
@@ -451,3 +537,4 @@ class ImageTextKeyView(ctx: Context, theme: Theme, def: KeyDef.Appearance.ImageT
         updateMargins(newConfig.orientation)
     }
 }
+

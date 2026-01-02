@@ -72,7 +72,7 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
 
     private lateinit var keyboardView: FrameLayout
 
-    private val keyboards: HashMap<String, BaseKeyboard> by lazy {
+    private val keyboards: HashMap<String, IKeyboard> by lazy {
         hashMapOf(
             QWERTextKeyboard.Name to QWERTextKeyboard(context,theme),
             T9TextKeyboard.Name to T9TextKeyboard(context,theme),
@@ -86,7 +86,7 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
 
     private var lastSymbolType: String by AppPrefs.getInstance().internal.lastSymbolLayout
 
-    private val currentKeyboard: BaseKeyboard? get() = keyboards[currentKeyboardName]
+    private val currentKeyboard: IKeyboard? get() = keyboards[currentKeyboardName]
 
     private val keyActionListener = KeyActionListener { it, source ->
         if (it is KeyAction.LayoutSwitchAction) {
@@ -110,7 +110,7 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     private fun detachCurrentLayout() {
         currentKeyboard?.also {
             it.onDetach()
-            keyboardView.removeView(it)
+            keyboardView.removeView(it as View)
             it.keyActionListener = null
             it.popupActionListener = null
         }
@@ -121,7 +121,7 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
         currentKeyboard?.let {
             it.keyActionListener = keyActionListener
             it.popupActionListener = popupActionListener
-            keyboardView.apply { add(it, lParams(matchParent, matchParent)) }
+            keyboardView.apply { add(it as View, lParams(matchParent, matchParent)) }
             it.onAttach()
             it.onReturnDrawableUpdate(returnKeyDrawable.resourceId)
             it.onInputMethodUpdate(fcitx.runImmediately { inputMethodEntryCached })

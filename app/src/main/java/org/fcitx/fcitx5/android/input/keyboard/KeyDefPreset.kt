@@ -408,13 +408,13 @@ class MixedAlphabetKey(
     percentWidth: Float = 0.1f,
     variant: Variant = Variant.Normal,
     popup: Array<Popup>? = null,
-    keyBorder: Border = Border.Special
+    keyBorder: Border = Border.Special,
 ) : KeyDef(
     Appearance.Text(
         displayText,
         textSize = textSize,
         percentWidth = percentWidth,
-        variant = variant
+        variant = variant,
     ),
     setOf(
         Behavior.Press(KeyAction.FcitxKeyAction(character)),
@@ -423,6 +423,20 @@ class MixedAlphabetKey(
     popup ?: arrayOf(
         Popup.Keyboard("t9-$character")
     )
+)
+
+class ColumnKey(
+    children: List<KeyDef>,
+    percentWidth: Float,
+    variant: Variant
+) : KeyDef(
+    Appearance.Column(
+        children = children,
+        percentWidth = percentWidth,
+        variant= variant
+    ),
+    setOf(),
+    popup = null
 )
 
 class PunctuationKey(
