@@ -40,8 +40,10 @@ import org.fcitx.fcitx5.android.input.keyboard.KeyDef.Appearance.Variant
 import org.fcitx.fcitx5.android.utils.styledFloat
 import org.fcitx.fcitx5.android.utils.unset
 import splitties.dimensions.dp
+import splitties.views.centerText
 import splitties.views.dsl.constraintlayout.centerHorizontally
 import splitties.views.dsl.constraintlayout.centerInParent
+import splitties.views.dsl.constraintlayout.centerVertically
 import splitties.views.dsl.constraintlayout.constraintLayout
 import splitties.views.dsl.constraintlayout.lParams
 import splitties.views.dsl.constraintlayout.parentId
@@ -60,6 +62,7 @@ import kotlin.math.roundToInt
 abstract class KeyView(ctx: Context, val theme: Theme, val def: KeyDef.Appearance) :
     CustomGestureView(ctx) {
 
+    lateinit var text: String
     val bordered: Boolean
     val borderStroke: Boolean
     val rippled: Boolean
@@ -264,7 +267,8 @@ class ColumnKeyView(
     private val visibleCount = 3
 
     private val recyclerView: RecyclerView = RecyclerView(ctx).apply {
-        overScrollMode = RecyclerView.OVER_SCROLL_NEVER
+        setItemViewCacheSize(0)
+        overScrollMode = OVER_SCROLL_NEVER
         isVerticalScrollBarEnabled = false
         clipChildren = true
         clipToPadding = true
@@ -311,9 +315,8 @@ class ColumnKeyView(
         canvas.restoreToCount(save)
     }
 
-    fun refreshRecyclerView(){
-        recyclerView.removeAllViewsInLayout()
-        recyclerView.requestLayout()
+    fun resetPosition(pos:Int = 0){
+        recyclerView.smoothScrollToPosition(pos)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

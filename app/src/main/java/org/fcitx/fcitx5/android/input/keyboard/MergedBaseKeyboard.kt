@@ -1,19 +1,27 @@
 package org.fcitx.fcitx5.android.input.keyboard
 
 import android.content.Context
+import android.util.Log
+import android.util.TypedValue
+import android.view.View
 import android.view.ViewGroup
+import android.view.ViewPropertyAnimator
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.fcitx.fcitx5.android.daemon.FcitxDaemon
 import org.fcitx.fcitx5.android.data.theme.Theme
 import org.fcitx.fcitx5.android.input.keyboard.ColumnKeyView.VH
 import org.fcitx.fcitx5.android.input.keyboard.KeyDef.Appearance.Border
+import org.fcitx.fcitx5.android.input.keyboard.KeyDef.Appearance.Variant
 import org.fcitx.fcitx5.android.input.keyboard.T9TextKeyboard.Companion.columnKey
 import splitties.views.dsl.constraintlayout.lParams
 import splitties.views.dsl.constraintlayout.leftOfParent
 import splitties.views.dsl.constraintlayout.topOfParent
 import splitties.views.dsl.core.add
+import splitties.views.dsl.core.textView
 
 open class MergedBaseKeyboard(
     context: Context,
@@ -27,6 +35,20 @@ open class MergedBaseKeyboard(
     var adapter: ColumnAdapter? = null
 
     private  val regex = Regex("([A-Za-z ]+)")
+
+    companion object {
+        val segments: MutableList<String> = mutableListOf<String>()
+
+        var input :String = ""
+
+        fun resetInput() {
+            input = ""
+        }
+
+        fun appendInput(v:String){
+            input += v
+        }
+    }
 
     init {
         post {
@@ -78,25 +100,46 @@ open class MergedBaseKeyboard(
         when(action){
             //清空之后，也需要同步清空 候选词菜单
             is KeyAction.ClearAction -> {
+                resetInput()
                 adapter?.updateItems( (columnKey.appearance as KeyDef.Appearance.Column).children)
-                columnKeyView.refreshRecyclerView()
+            }
+            is KeyAction.PreeditKeyAction ->{
+                for(char in action.act){
+
+                }
             }
             is KeyAction.FcitxKeyAction ->{
                 if(action.act.length == 1 && action.act[0]  in '1'..'9'){
+                    appendInput(action.act)
                     val fcitx = FcitxDaemon.getFirstConnectionOrNull()
                     fcitx?.lifecycleScope?.launch {
+                        Log.d("sssssssss", "ssssss")
                         fcitx.runOnReady{
-                            val candidates = getCandidates(0, 50)
+                            val candidates = getCandidates(0, 100)
                             val keys =  mutableListOf<KeyDef>()
+                            val map = mutableMapOf<String, Boolean>()
                             for(item in candidates){
-                                val t = regex.findAll(item).toList()
-                                if(t.isNotEmpty()){
-                                    keys.add(MixedAlphabetKey(t[0].value,t[0].value))
+                                val matches = regex.findAll(item).toList()
+                                for(item in matches){
+                                    val parts = item.value.trim().split(" ")
+                                    for(part in parts){
+                                        val cpart = part.trim()
+                                        if (map.containsKey(cpart) || cpart.isBlank()){
+                                            continue
+                                        }
+                                        Log.d("TTTT", cpart)
+                                        map[cpart] = true
+                                        keys.add(PreeditKey(cpart,cpart, percentWidth =  0.15f))
+                                        break
+                                    }
+                                    break
                                 }
                             }
-                            columnKeyView.post {
-                                adapter?.updateItems(keys)
-                                columnKeyView.refreshRecyclerView()
+                            if (keys.isNotEmpty()){
+                                withContext(Dispatchers.Main) {
+                                        adapter?.updateItems(keys)
+                                        columnKeyView.resetPosition()
+                                }
                             }
                         }
                     }
@@ -122,30 +165,12 @@ open class MergedBaseKeyboard(
             val keyDef = items[viewType]
             val view = when (keyDef.appearance) {
                 is KeyDef.Appearance.Text -> {
-                    val appearance = KeyDef.Appearance.Text(
-                        displayText = keyDef.appearance.displayText,
-                        textSize = keyDef.appearance.textSize,
-                        textStyle = keyDef.appearance.textStyle,
-                        percentWidth = keyDef.appearance.percentWidth,
-                        variant = keyDef.appearance.variant,
-                        border = Border.Off,
-                        margin = keyDef.appearance.margin,
-                        viewId = keyDef.appearance.viewId,
-                        soundEffect = keyDef.appearance.soundEffect,
-                    )
-                    TextKeyView(ctx, theme, appearance)
+                    keyDef.appearance.apply {
+                        border = Border.Off
+                    }
+                    TextKeyView(ctx, theme, keyDef.appearance)
                 }
                 else -> error("Unsupported Column child")
-            }
-            keyDef.behaviors.forEach {
-                when (it) {
-                    is KeyDef.Behavior.Press -> {
-                        view.setOnClickListener { _ ->
-                            onActionCallback(it.action)
-                        }
-                    }
-                    else -> {}
-                }
             }
             return VH(view)
         }
@@ -156,6 +181,37 @@ open class MergedBaseKeyboard(
                     LayoutParams.MATCH_PARENT,
                     itemHeight
                 )
+            }
+            val keyDef = items[position]
+            val view = holder.itemView
+            when {
+                view is TextKeyView && keyDef.appearance is KeyDef.Appearance.Text -> {
+                    val appearance = keyDef.appearance
+                    view.mainText.apply {
+                        background = null
+                        text = appearance.displayText
+                        setTextSize(TypedValue.COMPLEX_UNIT_DIP, appearance.textSize)
+                        textDirection = TEXT_DIRECTION_FIRST_STRONG_LTR
+                        // keep original typeface, apply textStyle only
+                        setTypeface(typeface, appearance.textStyle)
+                        setTextColor(
+                            when (appearance.variant) {
+                                Variant.Normal -> theme.keyTextColor
+                                Variant.AltForeground, Variant.Alternative -> theme.altKeyTextColor
+                                Variant.Accent -> theme.accentKeyTextColor
+                            }
+                        )
+                    }
+                }
+                else -> error("Unsupported Column")
+            }
+            holder.itemView.setOnClickListener(null)
+            keyDef.behaviors.forEach { behavior ->
+                if (behavior is KeyDef.Behavior.Press) {
+                    holder.itemView.setOnClickListener {
+                        onActionCallback(behavior.action)
+                    }
+                }
             }
         }
 

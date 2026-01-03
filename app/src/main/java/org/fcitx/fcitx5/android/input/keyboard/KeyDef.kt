@@ -16,11 +16,10 @@ open class KeyDef(
     sealed class Appearance(
         val percentWidth: Float,
         val variant: Variant,
-        val border: Border,
+        var border: Border,
         val margin: Boolean,
         val viewId: Int,
         val soundEffect: InputFeedbacks.SoundEffect,
-        val borderStroke: Boolean = true
     ) {
         enum class Variant {
             Normal, AltForeground, Alternative, Accent
