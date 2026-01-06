@@ -378,7 +378,7 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
             return
         }
         postFcitxJob {
-            sendKey("F12", up = false)
+            replaceRimeInput("")
         }
     }
 

@@ -132,6 +132,14 @@ class Fcitx(private val context: Context) : FcitxAPI, FcitxLifecycleOwner {
         setFcitxGlobalConfig(config)
     }
 
+    override suspend fun replaceRimeInput(newInput: String) =withFcitxContext {
+        replaceInput(newInput)
+    }
+
+    override suspend fun clearRimeContext() =withFcitxContext {
+        clear()
+    }
+
     override suspend fun getAddonConfig(addon: String) = withFcitxContext {
         getFcitxAddonConfig(addon) ?: RawConfig()
     }
@@ -335,6 +343,12 @@ class Fcitx(private val context: Context) : FcitxAPI, FcitxLifecycleOwner {
 
         @JvmStatic
         external fun triggerQuickPhraseInput()
+
+        @JvmStatic
+        external fun replaceInput(newInput: String)
+
+        @JvmStatic
+        external fun clear()
 
         @JvmStatic
         external fun triggerUnicodeInput()

@@ -434,6 +434,18 @@ public:
         return p_frontend->call<fcitx::IAndroidFrontend::offsetCandidatePage>(delta);
     }
 
+    void replaceInput(const std::string &newInput){
+        auto *ic = p_frontend->call<fcitx::IAndroidFrontend::activeInputContext>();
+        if (!ic) return;
+        ic->replaceInput(newInput);
+    }
+
+    void clear(){
+        auto *ic = p_frontend->call<fcitx::IAndroidFrontend::activeInputContext>();
+        if (!ic) return;
+        ic->clear();
+    }
+
     void save() {
         p_instance->save();
     }
@@ -988,6 +1000,24 @@ Java_org_fcitx_fcitx5_android_core_Fcitx_setFcitxClipboard(JNIEnv *env, jclass c
     RETURN_IF_NOT_RUNNING
     Fcitx::Instance().setClipboard(CString(env, string), password == JNI_TRUE);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_fcitx_fcitx5_android_core_Fcitx_replaceInput(JNIEnv *env,jclass /*clazz*/,jstring text) {
+    RETURN_IF_NOT_RUNNING
+    if (!text) {
+        return;
+    }
+    Fcitx::Instance().replaceInput(CString(env, text));
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_org_fcitx_fcitx5_android_core_Fcitx_clear(JNIEnv *env,jclass /*clazz*/) {
+    RETURN_IF_NOT_RUNNING
+    Fcitx::Instance().clear();
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL

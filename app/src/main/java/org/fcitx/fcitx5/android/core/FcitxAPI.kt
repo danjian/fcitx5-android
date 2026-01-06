@@ -64,6 +64,7 @@ interface FcitxAPI {
 
     suspend fun toggleIme()
     suspend fun activateIme(ime: String)
+
     suspend fun enumerateIme(forward: Boolean = true)
 
     suspend fun currentIme(): InputMethodEntry
@@ -73,6 +74,10 @@ interface FcitxAPI {
     suspend fun setGlobalConfig(config: RawConfig)
 
     suspend fun getAddonConfig(addon: String): RawConfig
+
+    suspend fun replaceRimeInput(newInput: String)
+
+    suspend fun clearRimeContext()
 
     suspend fun setAddonConfig(addon: String, config: RawConfig)
 

@@ -104,8 +104,12 @@ open class MergedBaseKeyboard(
                 adapter?.updateItems( (columnKey.appearance as KeyDef.Appearance.Column).children)
             }
             is KeyAction.PreeditKeyAction ->{
-                for(char in action.act){
-
+                val fcitx = FcitxDaemon.getFirstConnectionOrNull()
+                fcitx?.lifecycleScope?.launch {
+                    val t = action.act+"'"+input.substring(action.act.length)
+                    fcitx.runOnReady{
+                        replaceRimeInput(t)
+                    }
                 }
             }
             is KeyAction.FcitxKeyAction ->{
@@ -113,7 +117,6 @@ open class MergedBaseKeyboard(
                     appendInput(action.act)
                     val fcitx = FcitxDaemon.getFirstConnectionOrNull()
                     fcitx?.lifecycleScope?.launch {
-                        Log.d("sssssssss", "ssssss")
                         fcitx.runOnReady{
                             val candidates = getCandidates(0, 100)
                             val keys =  mutableListOf<KeyDef>()
@@ -127,7 +130,6 @@ open class MergedBaseKeyboard(
                                         if (map.containsKey(cpart) || cpart.isBlank()){
                                             continue
                                         }
-                                        Log.d("TTTT", cpart)
                                         map[cpart] = true
                                         keys.add(PreeditKey(cpart,cpart, percentWidth =  0.15f))
                                         break
