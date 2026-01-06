@@ -1,28 +1,29 @@
 package org.fcitx.fcitx5.android.input.keyboard
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
+import kotlinx.coroutines.*
 import android.util.TypedValue
-import android.view.View
 import android.view.ViewGroup
-import android.view.ViewPropertyAnimator
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import org.fcitx.fcitx5.android.core.FcitxEvent
+import org.fcitx.fcitx5.android.core.FcitxKeyMapping
 import org.fcitx.fcitx5.android.daemon.FcitxDaemon
 import org.fcitx.fcitx5.android.data.theme.Theme
 import org.fcitx.fcitx5.android.input.keyboard.ColumnKeyView.VH
 import org.fcitx.fcitx5.android.input.keyboard.KeyDef.Appearance.Border
 import org.fcitx.fcitx5.android.input.keyboard.KeyDef.Appearance.Variant
 import org.fcitx.fcitx5.android.input.keyboard.T9TextKeyboard.Companion.columnKey
+import org.fcitx.fcitx5.android.utils.T9PinYin
 import splitties.views.dsl.constraintlayout.lParams
 import splitties.views.dsl.constraintlayout.leftOfParent
 import splitties.views.dsl.constraintlayout.topOfParent
 import splitties.views.dsl.core.add
-import splitties.views.dsl.core.textView
+import timber.log.Timber
 
+@SuppressLint("ViewConstructor")
 open class MergedBaseKeyboard(
     context: Context,
     theme: Theme,
@@ -34,23 +35,25 @@ open class MergedBaseKeyboard(
 
     var adapter: ColumnAdapter? = null
 
-    private  val regex = Regex("([A-Za-z ]+)")
+    val fcitx = FcitxDaemon.connect(javaClass.name)
 
-    companion object {
-        val segments: MutableList<String> = mutableListOf<String>()
+    var combinations = ArrayDeque<String>()
 
-        var input :String = ""
+    val inputs = ArrayDeque<Char>()
 
-        fun resetInput() {
-            input = ""
-        }
-
-        fun appendInput(v:String){
-            input += v
-        }
+    fun isAlphaNumeric(c: Char): Boolean {
+        return c in '0'..'9' || c in 'a'..'z' || c in 'A'..'Z'
     }
 
+    private val stateScope =
+        CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
     init {
+        fcitx.lifecycleScope.launch {
+            fcitx.runImmediately { eventFlow }.collect {
+                handleFcitxEvent(it)
+            }
+        }
         post {
             var t = columnKey.appearance as KeyDef.Appearance.Column
             adapter = ColumnAdapter(context, theme, t.children) { action ->
@@ -65,7 +68,7 @@ open class MergedBaseKeyboard(
                 topOfParent()
                 leftOfParent()
                 matchConstraintPercentWidth = columnKey.appearance.percentWidth
-                matchConstraintPercentHeight= (1f / keyLayout.size) * columnNum
+                matchConstraintPercentHeight = (1f / keyLayout.size) * columnNum
             })
 
             val rowCount = keyLayout.size
@@ -97,54 +100,30 @@ open class MergedBaseKeyboard(
 
     override fun onAction(action: KeyAction, source: KeyActionListener.Source) {
         super.onAction(action, source)
-        when(action){
-            //清空之后，也需要同步清空 候选词菜单
-            is KeyAction.ClearAction -> {
-                resetInput()
-                adapter?.updateItems( (columnKey.appearance as KeyDef.Appearance.Column).children)
-            }
-            is KeyAction.PreeditKeyAction ->{
-                val fcitx = FcitxDaemon.getFirstConnectionOrNull()
-                fcitx?.lifecycleScope?.launch {
-                    val t = action.act+"'"+input.substring(action.act.length)
-                    fcitx.runOnReady{
-                        replaceRimeInput(t)
-                    }
-                }
-            }
-            is KeyAction.FcitxKeyAction ->{
-                if(action.act.length == 1 && action.act[0]  in '1'..'9'){
-                    appendInput(action.act)
-                    val fcitx = FcitxDaemon.getFirstConnectionOrNull()
-                    fcitx?.lifecycleScope?.launch {
-                        fcitx.runOnReady{
-                            val candidates = getCandidates(0, 100)
-                            val keys =  mutableListOf<KeyDef>()
-                            val map = mutableMapOf<String, Boolean>()
-                            for(item in candidates){
-                                val matches = regex.findAll(item).toList()
-                                for(item in matches){
-                                    val parts = item.value.trim().split(" ")
-                                    for(part in parts){
-                                        val cpart = part.trim()
-                                        if (map.containsKey(cpart) || cpart.isBlank()){
-                                            continue
-                                        }
-                                        map[cpart] = true
-                                        keys.add(PreeditKey(cpart,cpart, percentWidth =  0.15f))
-                                        break
-                                    }
-                                    break
-                                }
-                            }
-                            if (keys.isNotEmpty()){
-                                withContext(Dispatchers.Main) {
-                                        adapter?.updateItems(keys)
-                                        columnKeyView.resetPosition()
-                                }
+        when (action) {
+            is KeyAction.SymAction -> {
+                if (action.states.virtual) {
+                    when (action.sym.sym) {
+                        FcitxKeyMapping.FcitxKey_BackSpace -> {
+                            if (inputs.isNotEmpty()) {
+                                inputs.removeLast()
+                                refreshColumnView()
                             }
                         }
                     }
+                }
+            }
+            //清空之后，也需要同步清空 候选词菜单
+            is KeyAction.ClearAction -> {
+                reset()
+            }
+            is KeyAction.PreeditKeyAction -> {
+                selectCombination(action.act)
+            }
+            is KeyAction.FcitxKeyAction -> {
+                if (action.act.length == 1 && isAlphaNumeric(action.act[0])) {
+                    inputs.addLast(action.act[0])
+                    refreshColumnView()
                 }
             }
             else -> {}
@@ -180,8 +159,7 @@ open class MergedBaseKeyboard(
         override fun onBindViewHolder(holder: VH, position: Int) {
             if (itemHeight > 0) {
                 holder.itemView.layoutParams = RecyclerView.LayoutParams(
-                    LayoutParams.MATCH_PARENT,
-                    itemHeight
+                    LayoutParams.MATCH_PARENT, itemHeight
                 )
             }
             val keyDef = items[position]
@@ -221,10 +199,76 @@ open class MergedBaseKeyboard(
         override fun getItemViewType(position: Int): Int = position
 
         /** 动态更新子项数据 */
+        @SuppressLint("NotifyDataSetChanged")
         fun updateItems(newItems: List<KeyDef>) {
             items.clear()
             items.addAll(newItems)
             notifyDataSetChanged()
+        }
+    }
+
+    protected fun selectCombination(combination: String) {
+        val consume = combination.length
+        // 1. 防御：不能超过剩余输入
+        if (consume > inputs.size) return
+        // 2. 递归式消费输入
+        repeat(consume) {
+            inputs.removeFirst()
+        }
+        // 3. 记录已确认组合
+        combinations.addLast(combination)
+        // 4. 构造当前 rime preedit
+        val confirmed = combinations.joinToString("'")
+        val remaining = inputs.joinToString("")
+        fcitx.lifecycleScope.launch {
+            fcitx.runOnReady {
+                val newInput =  when {
+                    confirmed.isEmpty() -> remaining
+                    remaining.isEmpty() -> confirmed
+                    else -> "$confirmed'$remaining"
+                }
+                rimeReplaceInput(newInput)
+            }
+        }
+        refreshColumnView()
+    }
+
+
+
+    private fun refreshColumnView() {
+        val inputStr = inputs.joinToString("")
+        stateScope.launch {
+            val keys = T9PinYin.possibleCombinations(inputStr)
+            val items = keys.map { key -> PreeditKey(key, key, 21f - key.length, 0.15f, Variant.Normal) }
+            columnKeyView.post {
+                if (items.isNotEmpty()) {
+                    adapter?.updateItems(items)
+                    columnKeyView.resetPosition()
+                } else {
+                    resetColumnView()
+                }
+            }
+        }
+    }
+
+
+    private fun resetColumnView() {
+        adapter?.updateItems((columnKey.appearance as KeyDef.Appearance.Column).children)
+        columnKeyView.resetPosition()
+    }
+
+    override fun reset() {
+        combinations.clear()
+        inputs.clear()
+        refreshColumnView()
+    }
+
+    protected fun handleFcitxEvent(event: FcitxEvent<*>) {
+        when (event) {
+            is FcitxEvent.CommitStringEvent -> {
+                reset()
+            }
+            else -> {}
         }
     }
 }

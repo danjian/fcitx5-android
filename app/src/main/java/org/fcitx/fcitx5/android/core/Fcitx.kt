@@ -132,12 +132,16 @@ class Fcitx(private val context: Context) : FcitxAPI, FcitxLifecycleOwner {
         setFcitxGlobalConfig(config)
     }
 
-    override suspend fun replaceRimeInput(newInput: String) =withFcitxContext {
+    override suspend fun rimeReplaceInput(newInput: String) =withFcitxContext {
         replaceInput(newInput)
     }
 
-    override suspend fun clearRimeContext() =withFcitxContext {
+    override suspend fun rimeClearContext() =withFcitxContext {
         clear()
+    }
+
+    override suspend fun rimeGetCompositionText(): String = withFcitxContext {
+        getCompositionText()
     }
 
     override suspend fun getAddonConfig(addon: String) = withFcitxContext {
@@ -349,6 +353,9 @@ class Fcitx(private val context: Context) : FcitxAPI, FcitxLifecycleOwner {
 
         @JvmStatic
         external fun clear()
+
+        @JvmStatic
+        external fun getCompositionText(): String
 
         @JvmStatic
         external fun triggerUnicodeInput()

@@ -9,10 +9,12 @@ import android.content.Context
 import android.view.View
 import androidx.annotation.Keep
 import androidx.core.view.allViews
+import kotlinx.coroutines.launch
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.core.InputMethodEntry
 import org.fcitx.fcitx5.android.core.KeyState
 import org.fcitx.fcitx5.android.core.KeyStates
+import org.fcitx.fcitx5.android.daemon.FcitxDaemon
 import org.fcitx.fcitx5.android.data.InputFeedbacks
 import org.fcitx.fcitx5.android.data.prefs.AppPrefs
 import org.fcitx.fcitx5.android.data.prefs.ManagedPreference
@@ -26,6 +28,8 @@ class QWERTextKeyboard(
     context: Context,
     theme: Theme
 ) : BaseKeyboard(context, theme, Layout) {
+
+    val fcitx = FcitxDaemon.connect(javaClass.name)
 
     companion object {
         const val Name = "QWERText"
@@ -149,6 +153,14 @@ class QWERTextKeyboard(
             it.mainText.text = it.def.displayText.let { str ->
                 if (str.length != 1 || !str[0].isLetter()) return@forEach
                 if (keepLettersUppercase) str.uppercase() else str.uppercase()
+            }
+        }
+    }
+
+    override fun reset() {
+        fcitx.lifecycleScope.launch {
+            fcitx.runOnReady {
+                reset()
             }
         }
     }

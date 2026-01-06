@@ -75,9 +75,11 @@ interface FcitxAPI {
 
     suspend fun getAddonConfig(addon: String): RawConfig
 
-    suspend fun replaceRimeInput(newInput: String)
+    suspend fun rimeReplaceInput(newInput: String)
 
-    suspend fun clearRimeContext()
+    suspend fun rimeClearContext()
+
+    suspend fun rimeGetCompositionText(): String
 
     suspend fun setAddonConfig(addon: String, config: RawConfig)
 

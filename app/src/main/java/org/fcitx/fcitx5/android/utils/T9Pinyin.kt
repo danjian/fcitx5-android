@@ -1,9 +1,8 @@
 package org.fcitx.fcitx5.android.utils;
 
-import androidx.core.text.buildSpannedString
-
 object T9PinYin {
-    private val t9KeyMap = mapOf(
+    private val keyMap = mapOf(
+        // 字母映射
         'a' to 'A',
         'b' to 'A',
         'c' to 'A',
@@ -30,6 +29,15 @@ object T9PinYin {
         'x' to 'W',
         'y' to 'W',
         'z' to 'W',
+        // 数字映射
+        '2' to 'A',
+        '3' to 'D',
+        '4' to 'G',
+        '5' to 'J',
+        '6' to 'M',
+        '7' to 'P',
+        '8' to 'T',
+        '9' to 'W'
     )
     private val pinyinMap = HashMap<String, String>(225)
 
@@ -264,51 +272,20 @@ object T9PinYin {
     /**
      * 获取T9键码对应的拼音组合
      */
-    fun t9KeyToPinyin(t9Sequence: String?): Array<String> {
-        if (t9Sequence.isNullOrEmpty()) {
+    fun possibleCombinations(sequence: String?): Array<String> {
+        if (sequence.isNullOrEmpty()) {
             return emptyArray()
         }
-        val t9NumString = if (t9Sequence.length > 6) t9Sequence.substring(0, 6) else t9Sequence
-        val pinyin = ArrayList<String>(5)
-        for (length in t9NumString.length downTo 1) {
-            val prefix = t9NumString.take(length)
-            pinyinMap[prefix]?.let { value ->
-                pinyin.add(value)
-            }
+        val mappedSequence = sequence.map { c -> keyMap[c] ?: c }.joinToString("")
+        var part = mappedSequence
+        if (mappedSequence.length > 6) {
+            part = mappedSequence.take(6)
         }
-        return pinyin.joinToString(",") { it }.split(",").toTypedArray()
-    }
-
-
-    /**
-     * 获取拼音拼音对应的键码
-     */
-    fun pinyin2Key(sequence: String?): String {
-        if (sequence.isNullOrEmpty()) return ""
-        for ((key, value) in pinyinMap) {
-            val pinyinList = value.split(",")
-            if (pinyinList.any { it == sequence }) {
-                return key
-            }
+        val combinations = ArrayList<String>(5)
+        for (length in part.length downTo 1) {
+            val prefix = part.take(length)
+            pinyinMap[prefix]?.let { value -> combinations.add(value) }
         }
-        return ""
-    }
-
-    fun pinyin2T9Key(pinyin: Char): Char = t9KeyMap[pinyin] ?: pinyin
-
-    fun getT9Composition(composition: String, comment: String): CharSequence {
-        if (comment.isEmpty()) return composition
-        val compositionList = composition.filter { it.code <= 0xFF }.split("'".toRegex())
-        return buildSpannedString {
-            append(composition.filter { it.code > 0xFF })
-            comment.split("'").zip(compositionList).forEach { (pinyin, compo) ->
-                append(
-                    if (compo.length >= pinyin.length) pinyin else pinyin.substring(
-                        0, compo.length
-                    )
-                )
-                append("'")
-            }
-        }
+        return combinations.joinToString(",") { it }.split(",").toTypedArray()
     }
 }

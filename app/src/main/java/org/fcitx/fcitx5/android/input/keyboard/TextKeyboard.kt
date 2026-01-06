@@ -140,11 +140,6 @@ class TextKeyboard(
                         }
                     }
                 }
-                KeyActionListener.Source.Popup -> {
-                    if (capsState == CapsState.Once) {
-                        switchCapsState()
-                    }
-                }
             }
             is KeyAction.CapsAction -> switchCapsState(action.lock)
             else -> {}

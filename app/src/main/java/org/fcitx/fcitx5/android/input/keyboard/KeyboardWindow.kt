@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.core.CapabilityFlags
 import org.fcitx.fcitx5.android.core.InputMethodEntry
+import org.fcitx.fcitx5.android.daemon.FcitxDaemon
 import org.fcitx.fcitx5.android.daemon.launchOnReady
 import org.fcitx.fcitx5.android.data.InputFeedbacks
 import org.fcitx.fcitx5.android.data.prefs.AppPrefs
@@ -90,6 +91,7 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
 
     private val keyActionListener = KeyActionListener { it, source ->
         if (it is KeyAction.LayoutSwitchAction) {
+            currentKeyboard?.reset()
             switchLayout(it.act)
         } else {
             commonKeyActionListener.listener.onKeyAction(it, source)
@@ -192,28 +194,6 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     }
 
     override fun onAttached() {
-//        val schemaIndex = mapOf(
-//            QWERTextKeyboard.Name to 1,
-//            T9TextKeyboard.Name to 2,
-//        )
-//        if(schemaIndex.containsKey(currentKeyboardName)) {
-//            fcitx.launchOnReady {
-//                val actions = it.statusArea()
-//                for (item in actions) {
-//                    if (!item.name.endsWith("-im")) {
-//                        continue
-//                    }
-//                    if (item.menu.isNullOrEmpty()) {
-//                        continue
-//                    }
-//                    for ((index,menu) in item.menu.withIndex()) {
-//                        if (index == schemaIndex[currentKeyboardName]){
-//                            it.activateAction(menu.id)
-//                        }
-//                    }
-//                }
-//            }
-//        }
         currentKeyboard?.let {
             it.keyActionListener = keyActionListener
             it.popupActionListener = popupActionListener

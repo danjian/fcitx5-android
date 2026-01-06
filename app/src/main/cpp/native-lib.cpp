@@ -446,6 +446,13 @@ public:
         ic->clear();
     }
 
+    const char* getCompositionText() {
+        auto *ic = p_frontend->call<fcitx::IAndroidFrontend::activeInputContext>();
+        if (!ic) return nullptr; // ic 为 nullptr 时返回 nullptr
+        return ic->getCompositionText();
+    }
+
+
     void save() {
         p_instance->save();
     }
@@ -1016,6 +1023,14 @@ JNIEXPORT void JNICALL
 Java_org_fcitx_fcitx5_android_core_Fcitx_clear(JNIEnv *env,jclass /*clazz*/) {
     RETURN_IF_NOT_RUNNING
     Fcitx::Instance().clear();
+}
+
+extern "C"
+JNIEXPORT jstring JNICALL
+ Java_org_fcitx_fcitx5_android_core_Fcitx_getCompositionText(JNIEnv *env, jclass clazz) {
+    const char *t = Fcitx::Instance().getCompositionText();
+    if (!t) return env->NewStringUTF("");
+    return env->NewStringUTF(t);
 }
 
 

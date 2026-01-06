@@ -19,6 +19,9 @@ interface IKeyboard  {
     /** 键盘从界面移除时调用 */
     fun onDetach()
 
+    /** 重设键盘状态，因为有时候需要手动重设而不是全部依赖onDetach自动 */
+    fun reset()
+
     /** 收到输入法更新时调用 */
     fun onInputMethodUpdate(ime: InputMethodEntry)
 

@@ -6,6 +6,7 @@ package org.fcitx.fcitx5.android.input.keyboard
 
 import android.annotation.SuppressLint
 import android.content.Context
+import kotlinx.coroutines.launch
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.core.KeyState
 import org.fcitx.fcitx5.android.core.KeyStates
@@ -94,10 +95,20 @@ class T9TextKeyboard(
     }
 
     private fun keyboardSourceOnAction(action: KeyAction, source: KeyActionListener.Source){
-        val transformed = action
-        super.onAction(transformed, source)
+        super.onAction(action, source)
     }
 
+
+    override fun reset() {
+        super.reset()
+        fcitx.lifecycleScope.launch {
+            fcitx.runOnReady {
+                reset()
+            }
+        }
+    }
+
+    @SuppressLint("MissingSuperCall")
     override fun onAction(action: KeyAction, source: KeyActionListener.Source) {
         if (source == KeyActionListener.Source.Popup){
             popupSourceOnAction(action,source)

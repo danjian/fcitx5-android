@@ -519,4 +519,7 @@ abstract class BaseKeyboard(
         // do nothing by default
     }
 
+    override fun reset() {
+        // do nothing by default
+    }
 }
