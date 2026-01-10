@@ -440,10 +440,16 @@ public:
         ic->replaceInput(newInput);
     }
 
-    void clear(){
+    const char* getInput(){
         auto *ic = p_frontend->call<fcitx::IAndroidFrontend::activeInputContext>();
-        if (!ic) return;
-        ic->clear();
+        if (!ic) return nullptr;
+        return ic->getInput();
+    }
+
+    size_t getConfirmedPosition(){
+        auto *ic = p_frontend->call<fcitx::IAndroidFrontend::activeInputContext>();
+        if (!ic) return 0;
+        return ic->getConfirmedPosition();
     }
 
     const char* getCompositionText() {
@@ -1019,11 +1025,20 @@ Java_org_fcitx_fcitx5_android_core_Fcitx_replaceInput(JNIEnv *env,jclass /*clazz
 }
 
 extern "C"
-JNIEXPORT void JNICALL
-Java_org_fcitx_fcitx5_android_core_Fcitx_clear(JNIEnv *env,jclass /*clazz*/) {
-    RETURN_IF_NOT_RUNNING
-    Fcitx::Instance().clear();
+JNIEXPORT jstring JNICALL
+Java_org_fcitx_fcitx5_android_core_Fcitx_getInput(JNIEnv *env,jclass clazz) {
+    const char *t = Fcitx::Instance().getInput();
+    if (!t) return env->NewStringUTF("");
+    return env->NewStringUTF(t);
 }
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_org_fcitx_fcitx5_android_core_Fcitx_getConfirmedPosition(JNIEnv *env,jclass clazz) {
+    size_t pos = Fcitx::Instance().getConfirmedPosition();
+    return static_cast<jlong>(pos);
+}
+
 
 extern "C"
 JNIEXPORT jstring JNICALL

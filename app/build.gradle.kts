@@ -139,6 +139,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.lifecycle.testing)
     androidTestImplementation(libs.junit)
+    implementation(libs.ibm.icu4j)
 }
 
 configurations {

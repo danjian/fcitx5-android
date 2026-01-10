@@ -77,7 +77,9 @@ interface FcitxAPI {
 
     suspend fun rimeReplaceInput(newInput: String)
 
-    suspend fun rimeClearContext()
+    suspend fun rimeGetInput(): String
+
+    suspend fun rimeGetConfirmedPosition(): Int
 
     suspend fun rimeGetCompositionText(): String
 

@@ -2,7 +2,6 @@ package org.fcitx.fcitx5.android.utils;
 
 object T9PinYin {
     private val keyMap = mapOf(
-        // 字母映射
         'a' to 'A',
         'b' to 'A',
         'c' to 'A',
@@ -29,7 +28,9 @@ object T9PinYin {
         'x' to 'W',
         'y' to 'W',
         'z' to 'W',
+        '\'' to '\'',
         // 数字映射
+        '1' to '\'',
         '2' to 'A',
         '3' to 'D',
         '4' to 'G',
@@ -190,7 +191,7 @@ object T9PinYin {
         pinyinMap.put("ATAM", "cuan")
         pinyinMap.put("DAMG", "dang,fang")
         pinyinMap.put("DDMG", "deng,feng")
-        pinyinMap.put("DGAM", "dian,diao,fiao")
+        pinyinMap.put("DGAM", "dian,diao")
         pinyinMap.put("DGMG", "ding")
         pinyinMap.put("DMMG", "dong")
         pinyinMap.put("DTAM", "duan")
@@ -287,5 +288,15 @@ object T9PinYin {
             pinyinMap[prefix]?.let { value -> combinations.add(value) }
         }
         return combinations.joinToString(",") { it }.split(",").toTypedArray()
+    }
+
+    /**
+     * 两个值是否可能互为映射关系
+     */
+    fun possibleKeyMapping(k1: Char, k2: Char): Boolean {
+        if (keyMap.containsKey(k1) && keyMap.containsKey(k2)) {
+            return keyMap[k1] == keyMap[k2]
+        }
+        return false
     }
 }

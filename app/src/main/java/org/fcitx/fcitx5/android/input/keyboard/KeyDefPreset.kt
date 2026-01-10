@@ -426,6 +426,30 @@ class MixedAlphabetKey(
     )
 )
 
+class CommitKey(
+    character:String,
+    displayText: String,
+    textSize: Float = 16f,
+    percentWidth: Float = 0.1f,
+    variant: Variant = Variant.Normal,
+    popup: Array<Popup>? = null,
+    keyBorder: Border = Border.Default,
+) : KeyDef(
+    Appearance.Text(
+        displayText,
+        textSize = textSize,
+        percentWidth = percentWidth,
+        variant = variant,
+        border = keyBorder
+    ),
+    setOf(
+        Behavior.Press(KeyAction.CommitAction(character)),
+    ),
+    popup ?: arrayOf(
+        Popup.Keyboard("t9-$character")
+    )
+)
+
 class PreeditKey(
     character:String,
     displayText: String,

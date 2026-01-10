@@ -14,7 +14,7 @@ sealed class KeyAction {
     data class FcitxKeyAction(
         val act: String,
         val code: Int = ScancodeMapping.charToScancode(act[0]),
-        val states: KeyStates = KeyStates.Virtual
+        var states: KeyStates = KeyStates.Virtual
     ) : KeyAction()
 
     data class PreeditKeyAction(

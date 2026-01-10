@@ -1,5 +1,6 @@
 [versions]
 androidGradlePlugin = "8.13.1"
+icu4j = "78.1"
 kotlin = "2.2.21"
 ksp = "2.3.2"
 lifecycle = "2.9.4"
@@ -14,6 +15,7 @@ coreAnimation = "1.0.0"
 [libraries]
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 android-desugarJDKLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version = "2.1.5" }
+ibm-icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version = "1.10.2" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.9.0" }

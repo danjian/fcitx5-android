@@ -283,7 +283,7 @@ class ColumnKeyView(
     }
 
     /** Adapter 由外部注入 */
-    var adapter: MergedBaseKeyboard.ColumnAdapter? = null
+    var adapter: ColumnViewAdapter? = null
         set(value) {
             field = value
             recyclerView.adapter = value
@@ -291,7 +291,6 @@ class ColumnKeyView(
         }
 
     init {
-
         outlineProvider = ViewOutlineProvider.BOUNDS
         clipToOutline = true
         clipChildren = true
@@ -303,9 +302,20 @@ class ColumnKeyView(
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         recyclerView.post {
+            recyclerView.alpha = 1f
+            recyclerView.translationY = 0f
             (recyclerView.layoutManager as? LinearLayoutManager)
                 ?.scrollToPositionWithOffset(0, 0)
+            recyclerView.adapter = adapter
+            recyclerView.requestLayout()
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        recyclerView.removeAllViews()
+        recyclerView.recycledViewPool.clear()
+        recyclerView.adapter = null
     }
 
     override fun dispatchDraw(canvas: Canvas) {

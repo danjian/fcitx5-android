@@ -46,7 +46,7 @@ import kotlin.math.roundToInt
 abstract class BaseKeyboard(
     context: Context,
     protected val theme: Theme,
-    private val keyLayout: List<List<KeyDef>>
+    val keyLayout: List<List<KeyDef>>
 ) : ConstraintLayout(context),IKeyboard  {
 
     override var keyActionListener: KeyActionListener? = null
@@ -63,21 +63,6 @@ abstract class BaseKeyboard(
         spaceKeys.forEach {
             it.swipeEnabled = v
         }
-    }
-
-    companion object{
-        var numberSymMap = mapOf(
-            "1" to 0xffb1,
-            "2" to 0xffb2,
-            "3" to 0xffb3,
-            "4" to 0xffb4,
-            "5" to 0xffb5,
-            "6" to 0xffb6,
-            "7" to 0xffb7,
-            "8" to 0xffb8,
-            "9" to 0xffb9,
-            "0" to 0xffb0,
-        )
     }
 
     private val vivoKeypressWorkaround by prefs.advanced.vivoKeypressWorkaround

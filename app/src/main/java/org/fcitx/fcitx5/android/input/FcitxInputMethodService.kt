@@ -378,7 +378,7 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
             return
         }
         postFcitxJob {
-            rimeClearContext()
+            reset()
         }
     }
 

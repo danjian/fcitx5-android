@@ -136,9 +136,14 @@ class Fcitx(private val context: Context) : FcitxAPI, FcitxLifecycleOwner {
         replaceInput(newInput)
     }
 
-    override suspend fun rimeClearContext() =withFcitxContext {
-        clear()
+    override suspend fun rimeGetInput() = withFcitxContext {
+        getInput()
     }
+
+    override suspend fun rimeGetConfirmedPosition() = withFcitxContext {
+        getConfirmedPosition()
+    }
+
 
     override suspend fun rimeGetCompositionText(): String = withFcitxContext {
         getCompositionText()
@@ -352,7 +357,10 @@ class Fcitx(private val context: Context) : FcitxAPI, FcitxLifecycleOwner {
         external fun replaceInput(newInput: String)
 
         @JvmStatic
-        external fun clear()
+        external fun getInput(): String
+
+        @JvmStatic
+        external fun getConfirmedPosition(): Int
 
         @JvmStatic
         external fun getCompositionText(): String
