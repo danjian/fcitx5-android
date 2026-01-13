@@ -228,9 +228,13 @@ open class T9TextKeyboard(
 
     protected suspend fun handleFcitxEvent(event: FcitxEvent<*>) {
         when (event) {
+            is FcitxEvent.CommitStringEvent -> {
+                fcitx.runOnReady {
+                    rebuild(rimeGetInput(), rimeGetConfirmedPosition())
+                }
+            }
             is FcitxEvent.InputPanelEvent -> {
                 fcitx.runOnReady {
-                    Timber.tag("AAA").d(rimeGetCompositionText())
                     rebuild(rimeGetInput(), rimeGetConfirmedPosition())
                 }
             }
@@ -252,6 +256,16 @@ open class T9TextKeyboard(
         //如果已确认的位置发生变化，那么需要重新算
         if (lastConfirmPos != confirmedPos) {
             pinyinCombinations.clear()
+        }
+        //如果是拼音发生回退导致以选择的拼音组合比原始的输入长。需要修剪
+        var cLen = pinyinCombinations.joinToString(segmentChar.toString()).length
+        val sLen = segmentChar.toString().length
+        while (rawInput.length <= cLen && pinyinCombinations.isNotEmpty()) {
+            val removed = pinyinCombinations.removeLast()
+            cLen -= removed.length
+            if (pinyinCombinations.isNotEmpty()) {
+                cLen -= sLen
+            }
         }
         lastConfirmPos = confirmedPos
         if (lastConfirmPos > rawInput.length) {
