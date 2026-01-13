@@ -11,6 +11,7 @@ import androidx.viewpager2.widget.ViewPager2
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.data.theme.Theme
 import org.fcitx.fcitx5.android.input.keyboard.*
+import org.fcitx.fcitx5.android.input.keyboard.KeyDef.Appearance.Variant
 import splitties.dimensions.dp
 import splitties.views.dsl.constraintlayout.above
 import splitties.views.dsl.constraintlayout.below
@@ -30,8 +31,20 @@ class PickerLayout(context: Context, theme: Theme, switchKey: KeyDef) :
     class Keyboard(context: Context, theme: Theme, switchKey: KeyDef) : BaseKeyboard(
         context, theme, listOf(
             listOf(
-                LayoutSwitchKey("返回", "",   0.15f,KeyDef.Appearance.Variant.Alternative),
-                NormalSpaceKey(variant = KeyDef.Appearance.Variant.Alternative),
+                LayoutSwitchKey("返回", "",   0.15f,Variant.Alternative),
+                ImageLayoutSwitchKey(
+                    R.drawable.ic_baseline_emoji_24,
+                    PickerWindow.Key.Emoji.name,
+                    percentWidth = 0.15f,
+                    Variant.Alternative
+                ),
+                NormalSpaceKey(variant = Variant.Alternative),
+                ImageLayoutSwitchKey(
+                    R.drawable.ic_baseline_emoji_symbols_24,
+                    PickerWindow.Key.Emoticon.name,
+                    percentWidth = 0.15f,
+                    Variant.Alternative
+                ),
                 ReturnKey()
             )
         )

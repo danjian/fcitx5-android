@@ -36,6 +36,14 @@ class PickerWindow(
     private val followKeyBorder: Boolean = true
 ) : InputWindow.ExtendedInputWindow<PickerWindow>(), EssentialWindow {
 
+    private val pickerWindows: HashMap<String, EssentialWindow.Key> by lazy {
+        hashMapOf(
+            Key.Symbol.name to Key.Symbol,
+            Key.Emoji.name to Key.Emoji,
+            Key.Emoticon.name to Key.Emoticon,
+        )
+    }
+
     enum class Key : EssentialWindow.Key {
         Symbol,
         Emoji,
@@ -60,6 +68,11 @@ class PickerWindow(
     private val keyActionListener = KeyActionListener { it, source ->
         when (it) {
             is KeyAction.LayoutSwitchAction -> {
+                pickerWindows[it.act]?.let { key ->
+                    windowManager.attachWindow( key)
+                    return@KeyActionListener
+                }
+
                 // Switch to NumberKeyboard before attaching KeyboardWindow
                 (windowManager.getEssentialWindow(KeyboardWindow) as KeyboardWindow)
                     .switchLayout(it.act)

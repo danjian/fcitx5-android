@@ -10,14 +10,10 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.transition.Slide
-import kotlinx.coroutines.launch
 import org.fcitx.fcitx5.android.R
 import org.fcitx.fcitx5.android.core.CapabilityFlags
 import org.fcitx.fcitx5.android.core.InputMethodEntry
-import org.fcitx.fcitx5.android.daemon.FcitxDaemon
-import org.fcitx.fcitx5.android.daemon.launchOnReady
 import org.fcitx.fcitx5.android.data.InputFeedbacks
 import org.fcitx.fcitx5.android.data.prefs.AppPrefs
 import org.fcitx.fcitx5.android.input.bar.KawaiiBarComponent
@@ -37,8 +33,10 @@ import splitties.views.dsl.core.add
 import splitties.views.dsl.core.frameLayout
 import splitties.views.dsl.core.lParams
 import splitties.views.dsl.core.matchParent
+import timber.log.Timber
 import java.util.ArrayDeque
 import java.util.Deque
+import kotlin.lazy
 
 class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), EssentialWindow,
     InputBroadcastReceiver {
@@ -65,20 +63,27 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
         lastWindow !is PickerWindow
     }
 
-    override fun exitAnimation(nextWindow: InputWindow) =
-        super.exitAnimation(nextWindow).takeIf {
-            // disable animation switching between picker
-            nextWindow !is PickerWindow
-        }
+    override fun exitAnimation(nextWindow: InputWindow) = super.exitAnimation(nextWindow).takeIf {
+        // disable animation switching between picker
+        nextWindow !is PickerWindow
+    }
 
     private lateinit var keyboardView: FrameLayout
 
     private val keyboards: HashMap<String, IKeyboard> by lazy {
         hashMapOf(
-            QWERTextKeyboard.Name to QWERTextKeyboard(context,theme),
-            T9TextKeyboard.Name to T9TextKeyboard(context,theme),
+            QWERTextKeyboard.Name to QWERTextKeyboard(context, theme),
+            T9TextKeyboard.Name to T9TextKeyboard(context, theme),
             TextKeyboard.Name to TextKeyboard(context, theme),
             NumberKeyboard.Name to NumberKeyboard(context, theme)
+        )
+    }
+
+    private val pickerWindows: HashMap<String, EssentialWindow.Key> by lazy {
+        hashMapOf(
+            PickerWindow.Key.Symbol.name to PickerWindow.Key.Symbol,
+            PickerWindow.Key.Emoji.name to PickerWindow.Key.Emoji,
+            PickerWindow.Key.Emoticon.name to PickerWindow.Key.Emoticon,
         )
     }
     private var currentKeyboardName = ""
@@ -90,11 +95,12 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
     private val currentKeyboard: IKeyboard? get() = keyboards[currentKeyboardName]
 
     private val keyActionListener = KeyActionListener { it, source ->
-        if (it is KeyAction.LayoutSwitchAction) {
-            currentKeyboard?.reset()
-            switchLayout(it.act)
-        } else {
-            commonKeyActionListener.listener.onKeyAction(it, source)
+        when (it) {
+            is KeyAction.LayoutSwitchAction -> {
+                currentKeyboard?.reset()
+                switchLayout(it.act)
+            }
+            else -> commonKeyActionListener.listener.onKeyAction(it, source)
         }
     }
 
@@ -150,9 +156,6 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
         }
         ContextCompat.getMainExecutor(service).execute {
             if (keyboards.containsKey(target)) {
-                if (remember) {
-                    lastSymbolType = target
-                }
                 if (target == currentKeyboardName) return@execute
                 detachCurrentLayout()
                 attachLayout(target)
@@ -160,16 +163,18 @@ class KeyboardWindow : InputWindow.SimpleInputWindow<KeyboardWindow>(), Essentia
                     notifyBarLayoutChanged()
                 }
             } else {
-                if (remember) {
-                    lastSymbolType = PickerWindow.Key.Symbol.name
+                pickerWindows[to]?.let { key ->
+                    if (remember) {
+                        lastSymbolType = to
+                    }
+                    windowManager.attachWindow( key)
                 }
-                windowManager.attachWindow(PickerWindow.Key.Symbol)
             }
         }
     }
 
     override fun onStartInput(info: EditorInfo, capFlags: CapabilityFlags) {
-        val layout = when(keyboardLayout){
+        val layout = when (keyboardLayout) {
             InputFeedbacks.KeyboardLayoutMode.QWERTY -> QWERTextKeyboard.Name
             InputFeedbacks.KeyboardLayoutMode.T9 -> T9TextKeyboard.Name
         }
