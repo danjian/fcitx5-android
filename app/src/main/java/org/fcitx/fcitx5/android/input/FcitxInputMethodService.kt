@@ -420,13 +420,6 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
                 return
             }
             if (imeOptions.hasFlag(EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
-                //首先看当前候选区是否有候选词,如果有候选词，那么候选词上屏
-                if (candidates.isNotEmpty()){
-                    postFcitxJob {
-                        select(0)
-                    }
-                    return
-                }
                 if(preedit.isNotEmpty()){
                     postFcitxJob {
                         commitText(preedit)
@@ -444,12 +437,6 @@ class FcitxInputMethodService : LifecycleInputMethodService() {
             when (val action = imeOptions and EditorInfo.IME_MASK_ACTION) {
                 EditorInfo.IME_ACTION_UNSPECIFIED,
                 EditorInfo.IME_ACTION_NONE -> {
-                    if (candidates.isNotEmpty()){
-                        postFcitxJob {
-                            select(0)
-                        }
-                        return
-                    }
                     if(preedit.isNotEmpty()){
                         postFcitxJob {
                             commitText(preedit)
